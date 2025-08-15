@@ -1,0 +1,17 @@
+(
+name: "MCM",
+description: "Minimal Computer Music - pattern-based network ensemble tools for SuperCollider (AOO required)",
+author: "Filip Dobrocky",
+version: "0.1.0",
+repository: "https://github.com/filip-dobrocky/Minimal-Computer-Music",
+license: "GPL",
+dependencies: ["AOO"],
+classes: [
+    "MCMPlayer",
+    "MCMConductor",
+    "MCMClock",
+    "MCMConfig"
+],
+summary: "Pattern-based minimalism ensemble toolkit for SuperCollider, using AOO for network communication. Includes clock, conductor, and player classes for distributed pattern performance.",
+url: "https://github.com/filip-dobrocky/Minimal-Computer-Music"
+)
