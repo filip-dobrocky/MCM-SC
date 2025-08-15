@@ -1,7 +1,7 @@
 MCMClock {
     var <server, <serverPort, <ppqn, <bpm, <isPlaying = false;
     var <clockRoutine, <beatCounter = 0, <subdivCounter = 0;
-    var <groupName;
+    var <groupName, <group;
     var clockClient;
 
     *new { |serverPort, ppqn, bpm, groupName|
@@ -31,7 +31,6 @@ MCMClock {
         fork {
             // Ensure audio server is running            
             server = AooServer(serverPort);
-            server.start;
             
             Server.default.sync;
             
@@ -39,12 +38,16 @@ MCMClock {
             
             // Create clock client
             clockClient = AooClient(serverPort + 1);
+
+            Server.default.sync;
+
             clockClient.connect("localhost", serverPort, "_", action: { |err|
                 if (err.isNil) {
-                    clockClient.joinGroup(groupName, "clock", "_", "_", action: { |err, group, user|
+                    clockClient.joinGroup(groupName, "clock", "_", "_", action: { |err, grp, usr|
                         if (err.isNil) {
-                            "MCMClock: clock client joined group %".format(group.name).postln;
-                            this.prStartListening(clockClient);
+                            group = grp;
+                            "MCMClock: clock client joined group %".format(grp.name).postln;
+                            this.prStartListening();
                             this.prBroadcastPPQN();
                         } {
                             "MCMClock: failed to join group: %".format(err).postln;
@@ -88,14 +91,17 @@ MCMClock {
     }
     
     // Private methods
-    prStartListening { |clockClient|
+    prStartListening {
         clockClient.addListener(\msg, { |msg, time, peer|
+            msg.data[0].postln;
             switch (msg.data[0])
-            { "/tempo/bpm" } { 
+            { '/tempo/bpm' } { 
                 this.tempo_(msg.data[1]);
+                "MCMClock: tempo set to %".format(bpm).postln;
             }
-            { "/tempo/playing" } { 
+            { '/tempo/playing' } { 
                 this.playing_(msg.data[1] == 1);
+                "MCMClock: playing set to %".format(msg.data[1] == 1).postln;
             };
         });
     }
@@ -115,7 +121,7 @@ MCMClock {
                 var sleepTime;
                 
                 // Broadcast clock pulse
-                server.sendMsgToGroup(groupName, "/clock/pulse", beatCounter, subdivCounter);
+                clockClient.sendMsg(group, msg: ["/clock/pulse", beatCounter, subdivCounter], reliable: true);
                 
                 subdivCounter = subdivCounter + 1;
                 if (subdivCounter >= ppqn) {
@@ -141,7 +147,7 @@ MCMClock {
     
     prBroadcastPPQN {
         server !? {
-            server.sendMsgToGroup(groupName, "/clock/ppqn", ppqn);
+            clockClient.sendMsg(group, msg: ["/clock/ppqn", ppqn], reliable: true);
         };
     }
 }

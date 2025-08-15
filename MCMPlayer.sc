@@ -1,5 +1,5 @@
 MCMPlayer {
-    var <playerID, <serverAddress, <groupName, <serverPort, <clientPort;
+    var <playerID, <serverAddress, <groupName, <serverPort, <clientPort, <group;
     var client, <isConnected = false, <isListening = false;
     var <scale, <root, <octave, <amp, <instrument;
     var <stretch, <shift, <ppqn, <bpm, <beatTimeDur;
@@ -54,14 +54,18 @@ MCMPlayer {
     connect { |action|
         fork {
             client = AooClient(clientPort);
+
+            Server.default.sync;
+
             client.connect(serverAddress, serverPort, "_", action: { |err|
                 if (err.isNil) {
                     client.joinGroup(groupName, "player-" ++ playerID.asString, "_", "_", 
-                        action: { |err, group, user|
+                        action: { |err, grp, usr|
                             if (err.isNil) {
                                 isConnected = true;
+                                group = grp;
                                 "MCMPlayer: successfully joined group % as user %"
-                                    .format(group.name, user.name).postln;
+                                    .format(grp.name, usr.name).postln;
                                 action.value();
                             } {
                                 "MCMPlayer: failed to join group: %".format(err).postln;
@@ -148,12 +152,11 @@ MCMPlayer {
         isListening = true;
         client.addListener(\msg, { |msg, time, peer|
             switch (msg.data[0])
-            { '/clock/pulse' } { prClockEvent(msg.data[1], msg.data[2]); }
+            { '/clock/pulse' } { this.prClockEvent(msg.data[1], msg.data[2]); }
 	        { '/clock/ppqn' } { ppqn = msg.data[1] }
-	        { '/tempo/bpm' } { bpm = msg.data[1]; ~beatTimeDur = 60 / ~bpm; }
+	        { '/tempo/bpm' } { bpm = msg.data[1]; beatTimeDur = 60 / bpm; }
 	        { '/scale/root' } { root = msg.data[1] }
-            { '/scale/degrees' } { scale = Scale(msg.data[1..]) }
-            { };
+            { '/scale/degrees' } { scale = Scale(msg.data[1..]) };
         });
         
         "MCMPlayer: started listening for clock messages".postln;
