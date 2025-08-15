@@ -148,7 +148,7 @@ MCMPlayer {
         isListening = true;
         client.addListener(\msg, { |msg, time, peer|
             switch (msg.data[0])
-            { '/clock/pulse' } { clockEvent.(msg.data[1], msg.data[2]); }
+            { '/clock/pulse' } { prClockEvent(msg.data[1], msg.data[2]); }
 	        { '/clock/ppqn' } { ppqn = msg.data[1] }
 	        { '/tempo/bpm' } { bpm = msg.data[1]; ~beatTimeDur = 60 / ~bpm; }
 	        { '/scale/root' } { root = msg.data[1] }
@@ -185,5 +185,4 @@ MCMPlayer {
             };
         };
     }
-
 }

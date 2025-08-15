@@ -2,6 +2,7 @@ MCMClock {
     var <server, <serverPort, <ppqn, <bpm, <isPlaying = false;
     var <clockRoutine, <beatCounter = 0, <subdivCounter = 0;
     var <groupName;
+    var clockClient;
 
     *new { |serverPort, ppqn, bpm, groupName|
         ^super.new.init(
@@ -32,12 +33,12 @@ MCMClock {
             server = AooServer(serverPort);
             server.start;
             
-            s.sync;
+            Server.default.sync;
             
             "MCMClock: server started on port %".format(serverPort).postln;
             
             // Create clock client
-            var clockClient = AooClient(serverPort + 1);
+            clockClient = AooClient(serverPort + 1);
             clockClient.connect("localhost", serverPort, "_", action: { |err|
                 if (err.isNil) {
                     clockClient.joinGroup(groupName, "clock", "_", "_", action: { |err, group, user|
@@ -111,7 +112,7 @@ MCMClock {
         
         clockRoutine = Routine({
             loop {
-                if (isPlaying.not) { break };
+                var sleepTime;
                 
                 // Broadcast clock pulse
                 server.sendMsgToGroup(groupName, "/clock/pulse", beatCounter, subdivCounter);
@@ -123,7 +124,7 @@ MCMClock {
                 };
                 
                 // Calculate sleep time based on BPM and PPQN
-                var sleepTime = 60.0 / (bpm * ppqn);
+                sleepTime = 60.0 / (bpm * ppqn);
                 sleepTime.wait;
             };
         }).play;
