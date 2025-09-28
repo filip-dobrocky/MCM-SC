@@ -27,15 +27,15 @@ MCMClock {
             "MCMClock: already running".postln;
             ^this;
         };
-        
+
         fork {
-            // Ensure audio server is running            
+            // Ensure audio server is running
             server = AooServer(serverPort);
-            
+
             Server.default.sync;
-            
+
             "MCMClock: server started on port %".format(serverPort).postln;
-            
+
             // Create clock client
             clockClient = AooClient(serverPort + 1);
 
@@ -70,12 +70,12 @@ MCMClock {
         subdivCounter = 0;
         "MCMClock: stopped".postln;
     }
-    
-    tempo_ { |newBpm| 
+
+    tempo_ { |newBpm|
         bpm = newBpm;
         "MCMClock: tempo set to %".format(bpm).postln;
     }
-    
+
     playing_ { |bool|
         if (bool) {
             this.prStartClock();
@@ -83,68 +83,68 @@ MCMClock {
             this.prStopClock();
         };
     }
-    
+
     ppqn_ { |value|
         ppqn = value;
         this.prBroadcastPPQN();
         "MCMClock: PPQN set to %".format(ppqn).postln;
     }
-    
+
     // Private methods
     prStartListening {
         clockClient.addListener(\msg, { |msg, time, peer|
             msg.data[0].postln;
             switch (msg.data[0])
-            { '/tempo/bpm' } { 
+            { '/tempo/bpm' } {
                 this.tempo_(msg.data[1]);
                 "MCMClock: tempo set to %".format(bpm).postln;
             }
-            { '/tempo/playing' } { 
+            { '/tempo/playing' } {
                 this.playing_(msg.data[1] == 1);
                 "MCMClock: playing set to %".format(msg.data[1] == 1).postln;
             };
         });
     }
-    
+
     prStartClock {
         if (isPlaying) {
             "MCMClock: already playing".postln;
             ^this;
         };
-        
+
         isPlaying = true;
         beatCounter = 0;
         subdivCounter = 0;
-        
+
         clockRoutine = Routine({
             loop {
                 var sleepTime;
-                
+
                 // Broadcast clock pulse
                 clockClient.sendMsg(group, msg: ["/clock/pulse", beatCounter, subdivCounter], reliable: true);
-                
+
                 subdivCounter = subdivCounter + 1;
                 if (subdivCounter >= ppqn) {
                     subdivCounter = 0;
                     beatCounter = beatCounter + 1;
                 };
-                
+
                 // Calculate sleep time based on BPM and PPQN
                 sleepTime = 60.0 / (bpm * ppqn);
                 sleepTime.wait;
             };
         }).play;
-        
+
         "MCMClock: started playing at % BPM".format(bpm).postln;
     }
-    
+
     prStopClock {
         isPlaying = false;
         clockRoutine !? { clockRoutine.stop };
         clockRoutine = nil;
         "MCMClock: stopped playing".postln;
     }
-    
+
     prBroadcastPPQN {
         server !? {
             clockClient.sendMsg(group, msg: ["/clock/ppqn", ppqn], reliable: true);
