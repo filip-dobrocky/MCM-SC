@@ -119,26 +119,48 @@ MCMPlayer {
     
     // Musical parameter setters
     instrument_ { |synthDef|
-        instrument = synthDef;
-        Pbindef(playerID.asSymbol, \instrument, Pfunc({ instrument }));
+        if (synthDef.isKindOf(Pattern)) {
+            Pbindef(playerID.asSymbol, \instrument, synthDef);
+        } {
+            instrument = synthDef;
+            Pbindef(playerID.asSymbol, \instrument, Pfunc({ instrument }));
+        };
         stream = Pbindef(playerID.asSymbol).asStream;
     }
     stretch_ { |value|
-        stretch = value;
+        stretch = value.asFloat;
         Pbindef(playerID.asSymbol, \sustain, Pfunc({ |ev| beatTimeDur * stretch * ev[\dur] }));
         stream = Pbindef(playerID.asSymbol).asStream;
     }
     shift_ { |value|
-        shift = value;
+        shift = value.asInteger;
     }
     octave_ { |value|
-        octave = value;
-        Pbindef(playerID.asSymbol, \octave, Pfunc({ octave }));
+        if (value.isKindOf(Pattern)) {
+            Pbindef(playerID.asSymbol, \octave, value);
+        } {
+            octave = value.asFloat;
+            Pbindef(playerID.asSymbol, \octave, Pfunc({ octave }));
+        };
         stream = Pbindef(playerID.asSymbol).asStream;
+
     }
     amp_ { |value|
-        amp = value;
-        Pbindef(playerID.asSymbol, \amp, Pfunc({ amp }));
+        if (value.isKindOf(Pattern)) {
+            Pbindef(playerID.asSymbol, \amp, value);
+        } {
+            amp = value.asFloat;
+            Pbindef(playerID.asSymbol, \amp, Pfunc({ amp }));
+        };
+        stream = Pbindef(playerID.asSymbol).asStream;
+    }
+
+    setParam { |param, value|
+        if (value.isKindOf(Pattern)) {
+            Pbindef(playerID.asSymbol, param, value);
+        } {
+            Pbindef(playerID.asSymbol, param, Pfunc({ value }));
+        };
         stream = Pbindef(playerID.asSymbol).asStream;
     }
     
