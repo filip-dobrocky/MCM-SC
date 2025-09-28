@@ -1,9 +1,10 @@
 MCMConductor {
-    var <client, <serverAddress, <groupName, <group, <serverPort, <clientPort;
+    var <client, <serverAddress, <groupName, <group, <serverPort, <clientPort, <conductorID;
     var <isConnected = false;
 
-    *new { |serverAddress, groupName, serverPort, clientPort|
+    *new { |conductorID, serverAddress, groupName, serverPort, clientPort|
         ^super.new.init(
+            conductorID,
             serverAddress ? MCMConfig.defaultServerAddress,
             groupName ? MCMConfig.defaultGroupName,
             serverPort ? MCMConfig.defaultServerPort,
@@ -11,7 +12,8 @@ MCMConductor {
         );
     }
 
-    init { |serverAddr, groupNm, serverPrt, clientPrt|
+    init { |conductorIDArg, serverAddr, groupNm, serverPrt, clientPrt|
+        conductorID = conductorIDArg;
         serverAddress = serverAddr;
         groupName = groupNm;
         serverPort = serverPrt;
@@ -23,10 +25,10 @@ MCMConductor {
             client = AooClient(clientPort);
 
             Server.default.sync;
-            
+
             client.connect(serverAddress, serverPort, "_", action: { |err|
                 if (err.isNil) {
-                    client.joinGroup(groupName, "conductor-" ++ clientPort, "_", "_",
+                    client.joinGroup(groupName, conductorID, "_", "_",
                         action: { |err, grp, usr|
                             if (err.isNil) {
                                 isConnected = true;
@@ -45,7 +47,7 @@ MCMConductor {
             });
         };
     }
-    
+
     disconnect {
         if (isConnected) {
             client.disconnect();
@@ -55,17 +57,17 @@ MCMConductor {
             "MCMConductor: not connected".postln;
         };
     }
-    
+
     // Global control methods
-    setTempo { |bpm| 
+    setTempo { |bpm|
         if (isConnected) {
-            client.sendMsg(group, msg: ["/tempo/bpm", bpm]);
-            "MCMConductor: tempo set to %".format(bpm).postln;
+            client.sendMsg(group, msg: ["/tempo/bpm", bpm.asFloat]);
+            "MCMConductor: tempo set to %".format(bpm.asFloat).postln;
         } {
             "MCMConductor: not connected, cannot set tempo".postln;
         };
     }
-    
+
     startClock {
         if (isConnected) {
             client.sendMsg(group, msg: ["/tempo/playing", 1]);
@@ -74,7 +76,7 @@ MCMConductor {
             "MCMConductor: not connected, cannot start clock".postln;
         };
     }
-    
+
     stopClock {
         if (isConnected) {
             client.sendMsg(group, msg: ["/tempo/playing", 0]);
@@ -83,20 +85,25 @@ MCMConductor {
             "MCMConductor: not connected, cannot stop clock".postln;
         };
     }
-    
-    setScale { |degrees|
+
+    setScale { |scale|
         if (isConnected) {
-            client.sendMsg(group, msg: ["/scale/degrees"] ++ degrees);
-            "MCMConductor: scale set to %".format(degrees).postln;
+            if (scale.isKindOf(Scale)) {
+                client.sendMsg(group, msg: ["/scale/degrees"] ++ scale.degrees);
+                "MCMConductor: scale set to %".format(scale.degrees).postln;
+            } {
+                "MCMConductor: invalid scale, must be of type Scale".postln;
+            };
+
         } {
             "MCMConductor: not connected, cannot set scale".postln;
         };
     }
-    
+
     setRoot { |root|
         if (isConnected) {
-            client.sendMsg(group, msg: ["/scale/root", root]);
-            "MCMConductor: root set to %".format(root).postln;
+            client.sendMsg(group, msg: ["/scale/root", root.asInteger]);
+            "MCMConductor: root set to %".format(root.asInteger).postln;
         } {
             "MCMConductor: not connected, cannot set root".postln;
         };
