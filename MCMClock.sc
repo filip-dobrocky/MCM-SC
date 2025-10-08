@@ -2,7 +2,7 @@ MCMClock {
     var <server, <serverPort, <ppqn, <bpm, <isPlaying = false;
     var <clockRoutine, <beatCounter = 0, <subdivCounter = 0;
     var <groupName, <group;
-    var clockClient;
+    var clockClient, <ppqnBroadcastInterval = 16;
 
     *new { |serverPort, ppqn, bpm, groupName|
         ^super.new.init(
@@ -90,6 +90,11 @@ MCMClock {
         "MCMClock: PPQN set to %".format(ppqn).postln;
     }
 
+    ppqnBroadcastInterval_ { |beats|
+        ppqnBroadcastInterval = beats.max(1);
+        "MCMClock: PPQN broadcast interval set to % beats".format(ppqnBroadcastInterval).postln;
+    }
+
     // Private methods
     prStartListening {
         clockClient.addListener(\msg, { |msg, time, peer|
@@ -97,7 +102,6 @@ MCMClock {
             switch (msg.data[0])
             { '/tempo/bpm' } {
                 this.tempo_(msg.data[1]);
-                "MCMClock: tempo set to %".format(bpm).postln;
             }
             { '/tempo/playing' } {
                 this.playing_(msg.data[1] == 1);
@@ -122,6 +126,11 @@ MCMClock {
 
                 // Broadcast clock pulse
                 clockClient.sendMsg(group, msg: ["/clock/pulse", beatCounter, subdivCounter], reliable: true);
+
+                // Broadcast PPQN at regular intervals (every N beats) to keep players synchronized
+                if (beatCounter % ppqnBroadcastInterval == 0) {
+                    clockClient.sendMsg(group, msg: ["/clock/ppqn", ppqn], reliable: true);
+                };
 
                 subdivCounter = subdivCounter + 1;
                 if (subdivCounter >= ppqn) {
