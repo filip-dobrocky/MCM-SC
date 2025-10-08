@@ -104,16 +104,19 @@ MCMPlayer {
         var durations = arr.collect({ |x| if (x[1] == nil) { 1 } { x[1].asInteger.max(1) } });
         Pbindef(playerID.asSymbol, \degree, Pseq(notes, inf));
         Pbindef(playerID.asSymbol, \dur, Pseq(durations, inf));
+        // Only recreate stream when sequence structure changes
         stream = Pbindef(playerID.asSymbol).asStream;
     }
 
     degrees_ { |pattern|
         Pbindef(playerID.asSymbol, \degree, pattern);
+        // Only recreate stream when sequence structure changes
         stream = Pbindef(playerID.asSymbol).asStream;
     }
 
     durations_ { |pattern|
         Pbindef(playerID.asSymbol, \dur, pattern);
+        // Only recreate stream when sequence structure changes
         stream = Pbindef(playerID.asSymbol).asStream;
     }
     
@@ -121,16 +124,18 @@ MCMPlayer {
     instrument_ { |synthDef|
         if (synthDef.isKindOf(Pattern)) {
             Pbindef(playerID.asSymbol, \instrument, synthDef);
+            // Only recreate stream when pattern structure changes
+            stream = Pbindef(playerID.asSymbol).asStream;
         } {
             instrument = synthDef;
             Pbindef(playerID.asSymbol, \instrument, Pfunc({ instrument }));
+            // No need to recreate stream - Pfunc will pick up the new value
         };
-        stream = Pbindef(playerID.asSymbol).asStream;
     }
     stretch_ { |value|
         stretch = value.asFloat;
         Pbindef(playerID.asSymbol, \sustain, Pfunc({ |ev| beatTimeDur * stretch * ev[\dur] }));
-        stream = Pbindef(playerID.asSymbol).asStream;
+        // No need to recreate stream - Pfunc will pick up the new value
     }
     shift_ { |value|
         shift = value.asInteger;
@@ -138,30 +143,35 @@ MCMPlayer {
     octave_ { |value|
         if (value.isKindOf(Pattern)) {
             Pbindef(playerID.asSymbol, \octave, value);
+            // Only recreate stream when pattern structure changes
+            stream = Pbindef(playerID.asSymbol).asStream;
         } {
             octave = value.asFloat;
             Pbindef(playerID.asSymbol, \octave, Pfunc({ octave }));
+            // No need to recreate stream - Pfunc will pick up the new value
         };
-        stream = Pbindef(playerID.asSymbol).asStream;
-
     }
     amp_ { |value|
         if (value.isKindOf(Pattern)) {
             Pbindef(playerID.asSymbol, \amp, value);
+            // Only recreate stream when pattern structure changes
+            stream = Pbindef(playerID.asSymbol).asStream;
         } {
             amp = value.asFloat;
             Pbindef(playerID.asSymbol, \amp, Pfunc({ amp }));
+            // No need to recreate stream - Pfunc will pick up the new value
         };
-        stream = Pbindef(playerID.asSymbol).asStream;
     }
 
     setParam { |param, value|
         if (value.isKindOf(Pattern)) {
             Pbindef(playerID.asSymbol, param, value);
+            // Only recreate stream when pattern structure changes
+            stream = Pbindef(playerID.asSymbol).asStream;
         } {
             Pbindef(playerID.asSymbol, param, Pfunc({ value }));
+            // No need to recreate stream - Pfunc will pick up the new value
         };
-        stream = Pbindef(playerID.asSymbol).asStream;
     }
     
     // Control methods
