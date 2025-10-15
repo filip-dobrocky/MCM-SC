@@ -7,11 +7,11 @@ MCMPlayer {
 
     *new { |playerID, serverAddress, groupName, serverPort, clientPort|
         ^super.new.init(
-            playerID, 
-            serverAddress ? MCMConfig.defaultServerAddress,
-            groupName ? MCMConfig.defaultGroupName,
-            serverPort ? MCMConfig.defaultServerPort,
-            clientPort ? MCMConfig.defaultPlayerPort
+            playerID ? MCMConfig.username, 
+            serverAddress ? MCMConfig.serverAddress,
+            groupName ? MCMConfig.groupName,
+            serverPort ? MCMConfig.serverPort,
+            clientPort ? MCMConfig.playerPort
         );
     }
 
@@ -52,30 +52,49 @@ MCMPlayer {
 
     // Connection methods
     connect { |action|
+        var maxAttempts = 5;
+
         fork {
-            client = AooClient(clientPort);
+            // Inner recursive attempt function
+            var tryConnect;
+            tryConnect = { |attemptsLeft|
+                client = AooClient(clientPort);
 
-            Server.default.sync;
+                Server.default.sync;
 
-            client.connect(serverAddress, serverPort, "_", action: { |err|
-                if (err.isNil) {
-                    client.joinGroup(groupName, "player-" ++ playerID.asString, "_", "_", 
-                        action: { |err, grp, usr|
-                            if (err.isNil) {
-                                isConnected = true;
-                                group = grp;
-                                "MCMPlayer: successfully joined group % as user %"
-                                    .format(grp.name, usr.name).postln;
-                                action.value();
-                            } {
-                                "MCMPlayer: failed to join group: %".format(err).postln;
-                            };
-                        }
-                    );
-                } {
-                    "MCMPlayer: connection failed: %".format(err).postln;
-                };
-            });
+                client.connect(serverAddress, serverPort, "_", action: { |err|
+                    if (err.isNil) {
+                        client.joinGroup(groupName, "player-" ++ playerID.asString, "_", "_", 
+                            action: { |err, grp, usr|
+                                if (err.isNil) {
+                                    isConnected = true;
+                                    group = grp;
+                                    "MCMPlayer: successfully joined group % as user %"
+                                        .format(grp.name, usr.name).postln;
+                                    action.value();
+                                } {
+                                    "MCMPlayer: failed to join group: %".format(err).postln;
+                                };
+                            }
+                        );
+                    } {
+                        "MCMPlayer: connection failed on port %: %".format(clientPort, err).postln;
+
+                        if (attemptsLeft > 1) {
+                            // pick a new client port and retry
+                            clientPort = MCMConfig.nextPlayerPort;
+                            "MCMPlayer: retrying on port % (% attempts left)".format(clientPort, attemptsLeft - 1).postln;
+                            // small delay before retrying
+                            (0.1).wait;
+                            tryConnect.value(attemptsLeft - 1);
+                        } {
+                            "MCMPlayer: exhausted connection attempts".postln;
+                        };
+                    };
+                });
+            };
+
+            tryConnect.value(maxAttempts);
         };
     }
     

@@ -6,10 +6,10 @@ MCMClock {
 
     *new { |serverPort, ppqn, bpm, groupName|
         ^super.new.init(
-            serverPort ? MCMConfig.defaultServerPort,
+            serverPort ? MCMConfig.serverPort,
             ppqn ? MCMConfig.defaultPPQN,
             bpm ? MCMConfig.defaultBPM,
-            groupName ? MCMConfig.defaultGroupName
+            groupName ? MCMConfig.groupName
         );
     }
 

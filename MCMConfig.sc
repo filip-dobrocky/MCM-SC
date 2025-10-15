@@ -1,21 +1,22 @@
 MCMConfig {
     // Network configuration
-    classvar <defaultServerAddress = "localhost";
-    classvar <defaultGroupName = "ensemble";
-    classvar <defaultServerPort = 8080;
-    classvar <defaultPlayerPort = 9014;
-    classvar <defaultConductorPort = 9015;
-    
+    classvar <>serverAddress = "localhost";
+    classvar <>groupName = "ensemble";
+    classvar <>username = "user";
+    classvar <>serverPort = 8080;
+    classvar <>playerPort = 9014;
+    classvar <>conductorPort = 9015;
+
     // Clock configuration
-    classvar <defaultPPQN = 24;
-    classvar <defaultBPM = 120;
-    
+    classvar <>defaultPPQN = 24;
+    classvar <>defaultBPM = 120;
+
     // Utility methods for getting incremented ports for multiple instances
     *nextPlayerPort {
-        ^this.defaultPlayerPort + (0..100).choose;
+        ^this.playerPort + (0..100).choose;
     }
     
     *nextConductorPort {
-        ^this.defaultConductorPort + (0..100).choose;
+        ^this.conductorPort + (0..100).choose;
     }
 }
