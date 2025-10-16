@@ -85,7 +85,7 @@ MCMPlayer {
                             clientPort = MCMConfig.nextPlayerPort;
                             "MCMPlayer: retrying on port % (% attempts left)".format(clientPort, attemptsLeft - 1).postln;
                             // small delay before retrying
-                            (0.1).wait;
+                            // (0.1).wait;
                             tryConnect.value(attemptsLeft - 1);
                         } {
                             "MCMPlayer: exhausted connection attempts".postln;

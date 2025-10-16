@@ -51,7 +51,7 @@ MCMConductor {
                         if (attemptsLeft > 1) {
                             clientPort = MCMConfig.nextConductorPort;
                             "MCMConductor: retrying on port % (% attempts left)".format(clientPort, attemptsLeft - 1).postln;
-                            (0.1).wait;
+                            // (0.1).wait;
                             tryConnect.value(attemptsLeft - 1);
                         } {
                             "MCMConductor: exhausted connection attempts".postln;
