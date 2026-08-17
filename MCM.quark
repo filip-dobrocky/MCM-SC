@@ -5,12 +5,13 @@ author: "Filip Dobrocky",
 version: "0.1.0",
 repository: "https://github.com/filip-dobrocky/Minimal-Computer-Music",
 license: "GPL",
-dependencies: ["AOO"],
+dependencies: ["AOO", "https://github.com/j0py/Pmini"],
 classes: [
     "MCMPlayer",
     "MCMConductor",
     "MCMClock",
-    "MCMConfig"
+    "MCMConfig",
+    "MCMLink"
 ],
 summary: "Pattern-based minimalism ensemble toolkit for SuperCollider, using AOO for network communication. Includes clock, conductor, and player classes for distributed pattern performance.",
 url: "https://github.com/filip-dobrocky/Minimal-Computer-Music"
