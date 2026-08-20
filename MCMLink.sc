@@ -3,6 +3,7 @@
 //
 //   /clock/pulse, /tempo/bpm  ->  LinkClock  ->  Tidal
 //   /scale/degrees, /scale/root  ->  /ctrl mcmscale | mcmroot  ->  Tidal (cS / cF)
+//   /tempo/playing  ->  /ctrl mcmplaying  ->  Tidal (Link carries no transport)
 //   Tidal  ->  /mcm/conduct  ->  MCMConductor  ->  the ensemble
 //
 // Link discovers peers on loopback, so this only bridges the local machine.
@@ -115,7 +116,10 @@ MCMLink {
             { '/clock/pulse' } { this.prAlign((msg.data[1] + (msg.data[2] / ppqn))) }
             { '/clock/ppqn' } { ppqn = msg.data[1] }
             { '/tempo/bpm' } { this.prSetTempo(msg.data[1]) }
-            { '/tempo/playing' } { if (msg.data[1] > 0) { forceAlign = true } }
+            { '/tempo/playing' } {
+                if (msg.data[1] > 0) { forceAlign = true };
+                tidalAddr.sendMsg("/ctrl", "mcmplaying", msg.data[1].asFloat);
+            }
             { '/scale/root' } { tidalAddr.sendMsg("/ctrl", "mcmroot", msg.data[1].asFloat) }
             { '/scale/degrees' } {
                 tidalAddr.sendMsg("/ctrl", "mcmscale",
